@@ -22,7 +22,7 @@
     TK_YYYYMMDD_HHMMSSZ,     // 20080131.174501+1000 - YYYYMMDD.HHMMSSZZZZZ
   } TK_TIME_STAMP_FORMAT;
 
-  void tk_format_date( char *stamp, size_t stamp_char_max, time_t *date, TK_TIME_STAMP_FORMAT format );
+  void tk_format_date( char *stamp, const size_t stamp_char_max, const time_t date, const TK_TIME_STAMP_FORMAT format );
 
   //
   // LOGGING

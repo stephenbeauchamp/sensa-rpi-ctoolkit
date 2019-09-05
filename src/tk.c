@@ -37,10 +37,10 @@ void tk_string_strip_nonascii( char *str, int str_max_chars ) {
 
 // FILL A STRING stamp WITH A TIMESTAMP OF FORMAT format (OR DEFAULT DD-MMM-YYYY HH:MM:SS).
 // A SPECIFIC DATE MAY BE SUPPLIED date OR THE CURRENT TIME IS USED.
-void tk_format_date( char *stamp, size_t stamp_char_max, time_t *date, TK_TIME_STAMP_FORMAT format ) {
-  if ( date == NULL ) {
-    time_t tme = time(NULL); // NOW
-    date = &tme;
+void tk_format_date( char *stamp, const size_t stamp_char_max, const time_t date, const TK_TIME_STAMP_FORMAT format ) {
+  time_t tmp = date;
+  if ( tmp == NULL ) {
+    tmp = time(NULL); // NOW
   }
   char timeinfo_format[32];
   switch ( format ) { //REF: http://man7.org/linux/man-pages/man3/strftime.3.html
@@ -51,7 +51,7 @@ void tk_format_date( char *stamp, size_t stamp_char_max, time_t *date, TK_TIME_S
       strcpy(timeinfo_format, "%d-%b-%Y %H:%M:%S"); // TK_DD_MMM_YYYY_HH_MM_SS
       break;
   }
-  strftime( stamp, stamp_char_max, timeinfo_format, localtime( date ) );
+  strftime( stamp, stamp_char_max, timeinfo_format, localtime( &tmp ) );
 }
 
 //
@@ -153,12 +153,8 @@ void tk_fail( const char *format, ... ) {
 //
 
 void tk_file_get_app_path(char *app_path, int app_path_char_max ) {
-  readlink( "/proc/self/exe", app_path, app_path_char_max ); // THIS GETS THE FULL APP PATH
-  // SOMETIME 2 WIERD CHARS APPEAR ON THE END OF THE PATH STRING, THE LAST CHAR BEING NON_ASCII
-  char last_char = app_path[ strlen(app_path)-1 ];
-  if ( last_char<32 || last_char>126 ) { // WE HAVE A NON_ASCII ON THE END, SO TRIM THE LAST 2 CHARS
-    app_path[ strlen(app_path)-3 ] = '\0';
-  }
+  size_t app_path_l = readlink( "/proc/self/exe", app_path, app_path_char_max ); // THIS GETS THE FULL APP PATH
+  app_path[ app_path_l ] = '\0';
 }
 
 void tk_file_write_txt( char *path, char *txt ) {
@@ -180,9 +176,11 @@ struct tk_config_s {
   char key[128];
   char value_string[128];
   int is_int;
+  long value_int;
   int is_float;
+  double value_float;
   int is_date;
-  int is_hex;
+  time_t value_date;
 };
 
 struct tk_config_s tk_config_a[128];
@@ -195,9 +193,11 @@ void tk_config_read() {
     strcpy( tk_config_a[i].key, "");
     strcpy( tk_config_a[i].value_string, "");
     tk_config_a[i].is_int = 0;
+    tk_config_a[i].value_int = 0;
     tk_config_a[i].is_float = 0;
+    tk_config_a[i].value_float = 0.0;
     tk_config_a[i].is_date = 0;
-    tk_config_a[i].is_hex = 0;
+    tk_config_a[i].value_date = time(0);
   }
   //
   char *config_path[ 512 ];
@@ -292,14 +292,18 @@ void tk_config_read() {
       exit(1);
     }
     //
-    time_t value_time;
+    time_t value_date = time(NULL);
+    long value_int = 0;
+    double value_float = 0.0;
     // CREATE CONFIG STRUCT
     strcpy( tk_config_a[tk_config_count].key, key );
     strcpy( tk_config_a[tk_config_count].value_string, val );
-    tk_config_a[tk_config_count].is_int = tk_is_string_a_int( val );
-    tk_config_a[tk_config_count].is_float = tk_is_string_a_float( val );
-    tk_config_a[tk_config_count].is_date = tk_is_string_a_date( val, value_time );
-    tk_config_a[tk_config_count].is_hex = tk_is_string_a_hex( val );
+    tk_config_a[tk_config_count].is_int = tk_is_string_a_int( val, &value_int );
+    tk_config_a[tk_config_count].value_int = value_int;
+    tk_config_a[tk_config_count].is_float = tk_is_string_a_float( val, &value_float );
+    tk_config_a[tk_config_count].value_float = value_float;
+    tk_config_a[tk_config_count].is_date = tk_is_string_a_date( val, &value_date );
+    tk_config_a[tk_config_count].value_date = value_date;
     tk_config_count++;
   }
   fclose( rdr );
@@ -311,14 +315,17 @@ void tk_config_read() {
   // DUMP
   if ( tk_log_is_level( TK_DEBUG ) ) {
     for ( int i=0; i<tk_config_count; i++ ) {
+      time_t stamp_t = tk_config_a[i].value_date;
+      int stamp_max_char = 64;
+      char stamp[stamp_max_char];
+      tk_format_date( &stamp, stamp_max_char, stamp_t, TK_DD_MMM_YYYY_HH_MM_SS );
       tk_debug(
-        "  [ i%d f%d d%d h%d ] %s = %s",
-        tk_config_a[i].is_int,
-        tk_config_a[i].is_float,
-        tk_config_a[i].is_date,
-        tk_config_a[i].is_hex,
+        "  %s = %s\t[%ld, %f, %s]",
         tk_config_a[i].key,
-        tk_config_a[i].value_string
+        tk_config_a[i].value_string,
+        tk_config_a[i].value_int,
+        tk_config_a[i].value_float,
+        stamp
       );
     }
   }
@@ -338,7 +345,7 @@ void tk_config_string( char *val, char *key, char *default_value ) {
 // TYPE CONVERSIONS
 //
 
-int tk_is_string_a_int( const char *s ) {
+int tk_is_string_a_int( const char *s, long *l ) {
   int s_l = strlen( s );
   if ( s_l==0 ) {
     return 0;
@@ -353,10 +360,11 @@ int tk_is_string_a_int( const char *s ) {
     }
     return 0;
   }
+  *l = strtol( s, NULL, 10 );
   return 1;
 }
 
-int tk_is_string_a_float( const char *s ) {
+int tk_is_string_a_float( const char *s, double *d ) {
   int s_l = strlen(s);
   if ( s_l==0 ) {
     return 0;
@@ -375,6 +383,7 @@ int tk_is_string_a_float( const char *s ) {
     }
     return 0;
   }
+  *d = strtod( s, NULL );
   return 1;
 }
 
@@ -391,7 +400,7 @@ int tk_is_string_a_date( const char *s, time_t *t ) {
   if ( strlen( tmp )==16 ) {
     strcat( tmp, ":00" );
   }
-  time_t result = 0;
+
   int year=0, month=0, day=0, hour=0, min=0, sec=0;
   if ( sscanf( tmp, "%4d-%2d-%2d %2d:%2d:%2d", &year, &month, &day, &hour, &min, &sec ) == 6 ) {
     //
@@ -416,10 +425,11 @@ int tk_is_string_a_date( const char *s, time_t *t ) {
     u.tm_hour = hour;
     u.tm_min = min;
     u.tm_sec = sec;
-    if ( ( result = mktime(&u) ) == (time_t)-1 ) {
-      return 0;
+    time_t result = mktime( &u );
+    if ( result == (time_t)-1 ) {
+      return 0; // FAILED TO CONVERT STRUCT TM REPRESENTATION OF STRING TO TIME_T
     }
-    t = mktime( &result );
+    *t = mktime( &u );
     return 1;
   } else {
     return 0;

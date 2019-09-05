@@ -1,6 +1,11 @@
 # Prerequisites
 *.d
 
+.remote-sync.json
+test.c
+test.o
+test
+
 # Object files
 *.o
 *.ko
