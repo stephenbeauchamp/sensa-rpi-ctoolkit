@@ -352,15 +352,17 @@ long tk_config_int( const char key, const long default_value ) {
 }
 
 double tk_config_float( const char *key, const double default_value ) {
-  tk_debug("===================================== %s", key);
   for ( int i=0; i<tk_config_count; i++ ) {
-    tk_debug(" i %d, tk_config_count %d [is_float %d, key %s]", i, tk_config_count, tk_config_a[i].is_float, tk_config_a[i].key );
-    if ( tk_config_a[i].is_float!=0 && *tk_config_a[i].key == *key ) {
-      tk_debug( "found! %f", tk_config_a[i].value_float );
-      return tk_config_a[i].value_float;
+    if ( tk_config_a[i].is_float!=0 ) {
+      char *a[128];
+      char *b[128];
+      strcpy( a, tk_config_a[i].key );
+      strcpy( b, key );
+      if ( *a == *b ) { // (WEIRD WORK AROUND) WHY DOES (*tk_config_a[i].key == *key) ALWASY = TRUE, BUT THIS DOESN'T
+        return tk_config_a[i].value_float;
+      }
     }
   }
-  tk_debug(" returning default %d", default_value);
   return default_value;
 }
 
