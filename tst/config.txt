@@ -4,7 +4,8 @@
 # empty lines are ignored (or lines that are just whitespace )
 # other lines must have a format: key_name = value
 # value is a string, but if it can be a int, float, date, hex it will maked as a config var of these types.
-# dates must be in yyyy-mm-dd or yyyy-mm-ddTHH:mm:ss+tt:zz
+# dates must be in yyyy-mm-dd, yyyy-mm-dd HH:MM or yyyy-mm-ddTHH:mm:ss
+# DATES ARE ALWAYS UTC, REMEMBER TO ADD OR SUBTRACT YOU TIMEZONE TO GET LOCAL TIME
 # mulit-line settings are not allowed, 1 line per setting
 # non ASCII characters are ignored
 
@@ -53,3 +54,6 @@ leap01 = 2003-02-29
 leap01 = 2004-02-29
 leap01 = 2100-02-29
 FLOAT_987654321 = 987.654321
+DATE_2001_02_03T04_05_06 = 2001_02_03 04:05:06
+INT_9876 = 9876
+STRING_ZXY = zxy

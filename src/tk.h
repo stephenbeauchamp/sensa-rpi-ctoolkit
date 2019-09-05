@@ -64,10 +64,10 @@
 
   void tk_config_string( char *val, char *key, char *default_value );
 
-  long tk_config_int( const char key, const long default_value );
+  long tk_config_int( const char *key, const long default_value );
 
   double tk_config_float( const char *key, const double default_value );
 
-  time_t tk_config_date( char key, const time_t default_value );
+  time_t tk_config_date( const char *key, const time_t default_value );
 
 #endif /* _tk_h_ */

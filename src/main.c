@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include "tk.h"
 
@@ -100,10 +101,24 @@ int main() {
   tk_config_read();
 
   printf("\n========== TESTING CONFIG FETCHING ==========\n");
+  //
   double test_double_1 = tk_config_float( "FLOAT_NON_EXISTANT", 123.456789 );
-  tk_info( "FLOAT_NON_EXISTANT %f", test_double_1 );
-  tk_info( "FLOAT_987654321 %f", tk_config_float( "FLOAT_987654321", 123.456789 ) );
-
+  tk_info( "FLOAT_NON_EXISTANT = %f", test_double_1 );
+  assert( test_double_1==123.456789 );
+  //
+  double test_double_2 = tk_config_float( "FLOAT_987654321", 123.456789 );
+  tk_info( "FLOAT_987654321 = %f", test_double_2 );
+  assert( test_double_2==987.654321 );
+  //
+  long test_long_1 = tk_config_int( "INT_NON_EXISTANT", 12345 );
+  tk_debug("yo A");
+  tk_info( "INT_NON_EXISTANT = %d", test_long_1 );
+  assert( test_long_1==12345 );
+  //
+  long test_long_2 = tk_config_int( "INT_9876", 12345 );
+  tk_info( "INT_9876 = %d", test_long_2 );
+  assert( test_long_2==9876 );
+  //
 
   return 0;
 }
