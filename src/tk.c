@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <hiredis.h>
 
 // KERNEL SYTLE GUIDE - REF: https://www.kernel.org/doc/html/v4.17/process/coding-style.html
 // STYLE GUIDE - REF: https://www.doc.ic.ac.uk/lab/cplus/cstyle.html
@@ -200,7 +201,7 @@ void tk_config_read() {
     tk_config_a[i].value_date = time(0);
   }
   //
-  char *config_path[ 512 ];
+  char config_path[ 512 ];
   tk_file_get_app_path( config_path, 512 );
   strcat( config_path, ".config" );
   tk_info( "loading config '%s'", config_path);
@@ -318,7 +319,7 @@ void tk_config_read() {
       time_t stamp_t = tk_config_a[i].value_date;
       int stamp_max_char = 64;
       char stamp[stamp_max_char];
-      tk_format_date( &stamp, stamp_max_char, stamp_t, TK_DD_MMM_YYYY_HH_MM_SS );
+      tk_format_date( stamp, stamp_max_char, stamp_t, TK_DD_MMM_YYYY_HH_MM_SS );
       tk_debug(
         "  %s = %s\t[%ld, %f, %s]",
         tk_config_a[i].key,
@@ -339,6 +340,37 @@ void tk_config_string( char *val, char *key, char *default_value ) {
     }
   }
   strcpy( val, default_value ); // KEY NOT IN CONFIG, RETURN DEFAULT VALUE
+}
+
+long tk_config_int( const char key, const long default_value ) {
+  for ( int i=0; i<tk_config_count; i++ ) {
+    if ( tk_config_a[i].is_int!=0 && tk_config_a[i].key == key ) {
+      return tk_config_a[i].value_int;
+    }
+  }
+  return default_value;
+}
+
+double tk_config_float( const char *key, const double default_value ) {
+  tk_debug("===================================== %s", key);
+  for ( int i=0; i<tk_config_count; i++ ) {
+    tk_debug(" i %d, tk_config_count %d [is_float %d, key %s]", i, tk_config_count, tk_config_a[i].is_float, tk_config_a[i].key );
+    if ( tk_config_a[i].is_float!=0 && *tk_config_a[i].key == *key ) {
+      tk_debug( "found! %f", tk_config_a[i].value_float );
+      return tk_config_a[i].value_float;
+    }
+  }
+  tk_debug(" returning default %d", default_value);
+  return default_value;
+}
+
+time_t tk_config_date( const char key, const time_t default_value ) {
+  for ( int i=0; i<tk_config_count; i++ ) {
+    if ( tk_config_a[i].is_date!=0 && tk_config_a[i].key == key ) {
+      return tk_config_a[i].value_date;
+    }
+  }
+  return default_value;
 }
 
 //
@@ -460,3 +492,5 @@ int tk_is_string_a_hex( const char *s ) {
 //
 // REDIS
 //
+
+redisContext redis_conn;

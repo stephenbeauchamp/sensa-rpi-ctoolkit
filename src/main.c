@@ -99,6 +99,11 @@ int main() {
   printf("\n========== TESTING CONFIG ==========\n");
   tk_config_read();
 
+  printf("\n========== TESTING CONFIG FETCHING ==========\n");
+  double test_double_1 = tk_config_float( "FLOAT_NON_EXISTANT", 123.456789 );
+  tk_info( "FLOAT_NON_EXISTANT %f", test_double_1 );
+  tk_info( "FLOAT_987654321 %f", tk_config_float( "FLOAT_987654321", 123.456789 ) );
+
 
   return 0;
 }

@@ -48,7 +48,7 @@ test
 *.pdb
 
 /bin/ctoolkit_main
-/bin/config.txt
+/bin/*.*
 
 # Kernel Module Compile Results
 *.mod*

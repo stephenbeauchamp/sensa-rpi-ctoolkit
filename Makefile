@@ -17,7 +17,7 @@ CONFIG   = $(TARGET).config
 
 CC       = gcc
 # compiling flags here
-CFLAGS   = -std=c99 -Wall -I.
+CFLAGS   = -std=c99 -Wall -I. -I/usr/include/hiredis -lhiredis
 
 LINKER   = gcc
 # linking flags here
