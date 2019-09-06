@@ -62,7 +62,7 @@
 
   void tk_config_read();
 
-  void tk_config_string( char *val, char *key, char *default_value );
+  void tk_config_string( char *val, const char *key, const char *default_value );
 
   long tk_config_int( const char *key, const long default_value );
 

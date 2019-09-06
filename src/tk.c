@@ -332,7 +332,7 @@ void tk_config_read() {
   }
 }
 
-void tk_config_string( char *val, char *key, char *default_value ) {
+void tk_config_string( char *val, const char *key, const char *default_value ) {
   for ( int i=0; i<tk_config_count; i++ ) {
     if ( tk_config_a[i].key == key ) {
       strcpy( val, tk_config_a[i].value_string ); // KEY FOUND IN CONFIG
@@ -343,19 +343,11 @@ void tk_config_string( char *val, char *key, char *default_value ) {
 }
 
 long tk_config_int( const char *key, const long default_value ) {
-  tk_debug(" <-----> tk_config_int A");
   for ( int i=0; i<tk_config_count; i++ ) {
-    tk_debug(" <----->");
-    tk_debug(" <-----> tk_config_int B [ i = %d ]", i);
-    tk_debug(" <-----> tk_config_int B [ is_int = %d ]", tk_config_a[i].is_int);
-    tk_debug(" <-----> tk_config_int B [ cfg.key = %d ]", tk_config_a[i].key);
-    tk_debug(" <-----> tk_config_int B [ key = %d ]", key);
     if ( tk_config_a[i].is_int!=0 && strcmp( tk_config_a[i].key, key )==0 ) {
-      tk_debug(" <-------> tk_config_int C");
       return tk_config_a[i].value_int;
     }
   }
-  tk_debug(" <-----> tk_config_int Z");
   return default_value;
 }
 

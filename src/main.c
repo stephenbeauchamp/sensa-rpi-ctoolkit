@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <time.h>
 #include "tk.h"
 
 int main() {
@@ -102,7 +103,7 @@ int main() {
 
   printf("\n========== TESTING CONFIG FETCHING ==========\n");
   //
-  double test_double_1 = tk_config_float( "FLOAT_NON_EXISTANT", 123.456789 );
+  double test_double_1 = tk_config_float( "FLOAT_NON_EXISTENT", 123.456789 );
   tk_info( "FLOAT_NON_EXISTANT = %f", test_double_1 );
   assert( test_double_1==123.456789 );
   //
@@ -110,8 +111,7 @@ int main() {
   tk_info( "FLOAT_987654321 = %f", test_double_2 );
   assert( test_double_2==987.654321 );
   //
-  long test_long_1 = tk_config_int( "INT_NON_EXISTANT", 12345 );
-  tk_debug("yo A");
+  long test_long_1 = tk_config_int( "INT_NON_EXISTENT", 12345 );
   tk_info( "INT_NON_EXISTANT = %d", test_long_1 );
   assert( test_long_1==12345 );
   //
@@ -119,6 +119,17 @@ int main() {
   tk_info( "INT_9876 = %d", test_long_2 );
   assert( test_long_2==9876 );
   //
+  time_t base_date = time(0);
+  //
+  time_t test_date_1 = tk_config_date( "DATE_NON_EXISTENT", base_date );
+  tk_info( "DATE_NON_EXISTENT %lu", test_date_1 );
+  assert( test_date_1 == base_date );
+  //
+  time_t test_date_2 = tk_config_date( "DATE_2001_02_03T04_05_06", base_date );
+  tk_info( "DATE_2001_02_03T04_05_06 %lu", test_date_2 );
+  assert( test_date_2 == 981137106 );
+  //
+
 
   return 0;
 }
