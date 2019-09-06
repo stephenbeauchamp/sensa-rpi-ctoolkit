@@ -188,7 +188,13 @@ struct tk_config_s tk_config_a[128];
 
 int tk_config_count = 0;
 
+int tk_config_init = 0;
+
 void tk_config_read() {
+  if ( tk_config_init !=0 ) {
+    return; // CONFIG ALREADY LOADED
+  }
+  tk_config_init = 1;
   int ary_l = sizeof( tk_config_a )/sizeof( tk_config_a[0] );
   for ( int i=0; i<ary_l; i++ ) { // INIT ALL CONFIG ARRAYS
     strcpy( tk_config_a[i].key, "");
@@ -333,8 +339,9 @@ void tk_config_read() {
 }
 
 void tk_config_string( char *val, const char *key, const char *default_value ) {
+  tk_config_read();
   for ( int i=0; i<tk_config_count; i++ ) {
-    if ( tk_config_a[i].key == key ) {
+    if ( strcmp( tk_config_a[i].key, key )==0 ) {
       strcpy( val, tk_config_a[i].value_string ); // KEY FOUND IN CONFIG
       return;
     }
@@ -343,6 +350,7 @@ void tk_config_string( char *val, const char *key, const char *default_value ) {
 }
 
 long tk_config_int( const char *key, const long default_value ) {
+  tk_config_read();
   for ( int i=0; i<tk_config_count; i++ ) {
     if ( tk_config_a[i].is_int!=0 && strcmp( tk_config_a[i].key, key )==0 ) {
       return tk_config_a[i].value_int;
@@ -352,6 +360,7 @@ long tk_config_int( const char *key, const long default_value ) {
 }
 
 double tk_config_float( const char *key, const double default_value ) {
+  tk_config_read();
   for ( int i=0; i<tk_config_count; i++ ) {
     if ( tk_config_a[i].is_float!=0 && strcmp( tk_config_a[i].key, key )==0 ) {
       return tk_config_a[i].value_float;
@@ -361,6 +370,7 @@ double tk_config_float( const char *key, const double default_value ) {
 }
 
 time_t tk_config_date( const char *key, const time_t default_value ) {
+  tk_config_read();
   for ( int i=0; i<tk_config_count; i++ ) {
     if ( tk_config_a[i].is_date!=0 && strcmp( tk_config_a[i].key, key )==0 ) {
       return tk_config_a[i].value_date;
@@ -489,4 +499,33 @@ int tk_is_string_a_hex( const char *s ) {
 // REDIS
 //
 
-redisContext redis_conn;
+redisContext *tk_redis_conn = NULL;
+
+void tk_redis_get_conn() {
+  if ( tk_redis_conn ==  null ) {
+    char *redis_host = tk_config_string( "REDIS_HOST", "127.0.0.1" );
+    int *redis_port = tk_config_int( "REDIS_PORT", 6379 );
+    float *redis_conn_timeout_sec = tk_config_float( "REDIS_CONNECTION_TIMEOUT_SEC", 1.5 );
+    long tout_sec = floor(redis_conn_timeout_sec);
+    long tout_micro = floor(( redis_conn_timeout_sec - tout_sec ) * 1000000 );
+    struc timeval redis_conn_timeout = { tout_sec , tout_micro  };
+    tk_redis_conn = redisConnectWithTimeout( redis_host, redis_port, redis_timeout );
+    if ( redis_conn == NULL || redis_conn->err ) {
+      tk_fault( "ERROR: could not open connection with redis [host %s , port %d ]...", redis_host, redis_port );
+      exit ( 1 );
+    }
+  }
+  return tk_redis_conn;
+}
+
+void tk_redis_add_to_queue_end( const char *queue, const char *msg ) {
+  redisReply *reply = redisCommand( tk_redis_get_conn(), "LPUSH %s %s", queue, msg );
+  freeReplyObject( reply );
+  usleep( 1 * 1000 ); // NOT SURE IF THIS IS NEEDED?
+}
+
+void tk_redis_get_from_queue_end( char *msg, const char *queue ) {
+  redisReply *reply = redisCommand( tk_redis_get_conn(), "LPUSH %s %s", queue, msg );
+  freeReplyObject( reply );
+  usleep( 1 * 1000 ); // NOT SURE IF THIS IS NEEDED?
+}

@@ -70,4 +70,12 @@
 
   time_t tk_config_date( const char *key, const time_t default_value );
 
+  //
+  // REDIS
+  //
+
+  void tk_redis_add_to_queue_end( const char *queue, const char *msg );
+
+  void tk_redis_get_from_queue_end( char *msg, const char *queue );
+
 #endif /* _tk_h_ */
